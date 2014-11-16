@@ -42,14 +42,32 @@ namespace ardoPOParser
                     return null;
             }
 
-            // comments -- can put them all in one bag right now and ignore
+            // comments
             while (line.StartsWith("#"))
             {
+                if (line.StartsWith("# "))
+                    result.translator_comments += line.Substring(2).Trim() + "\n";
+                if (line.StartsWith("#."))
+                    result.extracted_comments += line.Substring(2).Trim() + "\n";
+                if (line.StartsWith("#:"))
+                    result.reference += line.Substring(2).Trim() + "\n";
+                if (line.StartsWith("#|"))
+                    result.previous_untranslated += line.Substring(2).Trim() + "\n";
+                if (line.StartsWith("#,"))
+                {
+                    foreach (string tag in line.Substring(2).Trim().ToLower().Split(','))
+                    {
+                        result.Tags.Add(tag);
+                    }
+                }
+
                 line = input.ReadLine();
                 if (line == null)
                     return null;
             }
 
+            // TODO: msgctx
+            // TODO: msg_plural
             // expecting msgid
             if (!line.Trim().StartsWith("msgid "))
             {
@@ -71,6 +89,7 @@ namespace ardoPOParser
             }
 
             // msgstr
+            // TODO: plural
 
             line = line.Substring("msgstr ".Length);
 
