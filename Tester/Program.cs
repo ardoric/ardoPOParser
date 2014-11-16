@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,7 +15,12 @@ namespace Tester
         {
             using (StreamReader sr = new StreamReader(@"..\..\..\xymon_4.3.17-4_pt.po"))
             {
+                var watch = Stopwatch.StartNew();
                 List<POEntry> pofile = POParser.Load(sr);
+                watch.Stop();
+
+                Console.WriteLine("Loaded in {0} ms", watch.ElapsedMilliseconds);
+
 
                 foreach (var entry in pofile)
                 {
@@ -23,7 +29,7 @@ namespace Tester
                     Console.WriteLine(entry.msgstr);
                     Console.WriteLine();
                 }
-
+                
             }
         }
     }
