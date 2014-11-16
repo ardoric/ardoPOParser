@@ -13,6 +13,15 @@ namespace Tester
     {
         static void Main(string[] args)
         {
+            Console.WriteLine(Console.Out.Encoding);
+            Console.Out.Close();
+            StreamWriter console_out = new StreamWriter(Console.OpenStandardOutput());
+            
+            console_out.AutoFlush = true;
+            Console.SetOut(console_out);
+
+            Console.WriteLine(console_out.Encoding);
+
             using (StreamReader sr = new StreamReader(@"..\..\..\xymon_4.3.17-4_pt.po"))
             {
                 var watch = Stopwatch.StartNew();
@@ -21,16 +30,25 @@ namespace Tester
 
                 Console.WriteLine("Loaded in {0} ms", watch.ElapsedMilliseconds);
 
+                POParser.Write(pofile, console_out);
 
-                foreach (var entry in pofile)
-                {
-                    Console.WriteLine(entry.msgid);
-                    Console.WriteLine();
-                    Console.WriteLine(entry.msgstr);
-                    Console.WriteLine();
-                }
-                
+
             }
+
+            using (StreamReader sr = new StreamReader(@"..\..\..\pioneers_15.3-1_pt.po"))
+            {
+                var watch = Stopwatch.StartNew();
+                List<POEntry> pofile = POParser.Load(sr);
+                watch.Stop();
+
+                Console.WriteLine("Loaded in {0} ms", watch.ElapsedMilliseconds);
+
+
+                POParser.Write(pofile, console_out);
+
+            }
+
+            console_out.Close();
         }
     }
 }

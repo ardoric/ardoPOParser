@@ -26,6 +26,16 @@ namespace ardoPOParser
             return result;
         }
 
+
+        public static void Write(List<POEntry> pofile, StreamWriter output)
+        {
+            foreach (POEntry entry in pofile)
+            {
+                writeEntry(entry, output);
+            }
+        }
+
+
         private static POEntry readEntry(StreamReader input)
         {
             POEntry result = new POEntry();
@@ -46,24 +56,31 @@ namespace ardoPOParser
             while (line.StartsWith("#"))
             {
                 if (line.StartsWith("# "))
-                    result.translator_comments += line.Substring(2).Trim() + "\n";
+                    result.translator_comments += (result.translator_comments == null ? "":"\n") + line.Substring(2).Trim();
                 if (line.StartsWith("#."))
-                    result.extracted_comments += line.Substring(2).Trim() + "\n";
+                    result.extracted_comments += (result.extracted_comments == null ? "" : "\n") + line.Substring(2).Trim();
                 if (line.StartsWith("#:"))
-                    result.reference += line.Substring(2).Trim() + "\n";
+                    result.reference += (result.reference == null ? "" : "\n") + line.Substring(2).Trim();
                 if (line.StartsWith("#|"))
-                    result.previous_untranslated += line.Substring(2).Trim() + "\n";
+                    result.previous_untranslated += (result.previous_untranslated == null ? "" : "\n") + line.Substring(2).Trim();
                 if (line.StartsWith("#,"))
                 {
                     foreach (string tag in line.Substring(2).Trim().ToLower().Split(','))
                     {
-                        result.Tags.Add(tag);
+                        result.Tags.Add(tag.Trim());
                     }
                 }
 
                 line = input.ReadLine();
                 if (line == null)
                     return null;
+
+                while (line.Trim() == "")
+                {
+                    line = input.ReadLine();
+                    if (line == null)
+                        return null;
+                }
             }
 
             // TODO: msgctx
@@ -105,6 +122,93 @@ namespace ardoPOParser
             }
 
             return result;
+        }
+
+        private static void writeEntry(POEntry entry, StreamWriter output)
+        {
+            if (entry.translator_comments != null)
+            {
+                foreach (string comment_line in entry.translator_comments.Split('\n'))
+                {
+                    output.WriteLine("# " + comment_line);
+                }
+            }
+
+            if (entry.extracted_comments != null)
+            {
+                foreach (string comment_line in entry.extracted_comments.Split('\n'))
+                {
+                    output.WriteLine("#. " + comment_line);
+                }
+            }
+
+            if (entry.reference != null)
+            {
+                foreach (string comment_line in entry.reference.Split('\n'))
+                {
+                    output.WriteLine("#: " + comment_line);
+                }
+            }
+
+            if (entry.Tags.Count > 0)
+            {
+                output.WriteLine("#, " + String.Join(", ", entry.Tags.ToArray()));
+            }
+
+            if (entry.previous_untranslated != null)
+            {
+                foreach (string comment_line in entry.previous_untranslated.Split('\n'))
+                {
+                    output.WriteLine("#| " + comment_line);
+                }
+            }
+
+
+            if (entry.msgctx != null)
+            {
+                writeString("msgctx", entry.msgctx, output);
+            }
+
+
+            writeString("msgid", entry.msgid, output);
+            writeString("msgstr", entry.msgstr, output);
+
+            output.WriteLine();
+        }
+
+        private static void writeString(string section, string value, StreamWriter output)
+        {
+            output.Write(section + " ");
+
+            if (value.Length < 70)
+            {
+                output.WriteLine("\"" + value + "\"");
+            }
+            else
+            {
+                output.WriteLine("\"\"");
+                string current = "";
+
+                foreach (string s in value.Split(' '))
+                {
+                    if (s.EndsWith("\\n"))
+                    {
+                        output.WriteLine("\"" + current + " " + s + "\"");
+                        current = "";
+                    }
+                    else if (s.Length + current.Length > 72)
+                    {
+                        output.WriteLine("\"" + current + " \"");
+                        current = s;
+                    } 
+                    else 
+                    {
+                        current += ((current == "")?"":" ") + s;
+                    }
+                }
+                if (current != "")
+                    output.WriteLine("\"" + current + "\"");
+            }
         }
     }
 }
